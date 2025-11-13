@@ -1,0 +1,333 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import AdminLayout from '@/components/AdminLayout'
+import { supabase } from '@/lib/supabase'
+import { Order } from '@/lib/types'
+import toast from 'react-hot-toast'
+
+export default function AdminOrders() {
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null)
+  const [showStatusModal, setShowStatusModal] = useState(false)
+  const [status, setStatus] = useState<'Baru' | 'Diproses' | 'Selesai' | 'Batal'>('Baru')
+
+  useEffect(() => {
+    fetchOrders()
+  }, [])
+
+  const fetchOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          products (
+            id,
+            name,
+            category,
+            price
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      const transformedData = (data || []).map((order: any) => {
+        let product = null
+
+        if (order.products) {
+          if (Array.isArray(order.products)) {
+            product = order.products.length > 0 ? order.products[0] : null
+          } else {
+            product = order.products
+          }
+        }
+
+        return {
+          ...order,
+          product: product || null,
+        }
+      })
+
+      setOrders(transformedData)
+    } catch (error: any) {
+      toast.error('Gagal memuat pesanan: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdateStatus = async () => {
+    if (!editingOrder) return
+
+    try {
+      setUpdatingStatus(true)
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', editingOrder.id)
+
+      if (error) throw error
+      toast.success('Status pesanan berhasil diupdate!')
+      setShowStatusModal(false)
+      setEditingOrder(null)
+      fetchOrders()
+    } catch (error: any) {
+      toast.error('Gagal mengupdate status: ' + error.message)
+    } finally {
+      setUpdatingStatus(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus pesanan ini?')) return
+
+    try {
+      const { error } = await supabase.from('orders').delete().eq('id', id)
+
+      if (error) throw error
+      toast.success('Pesanan berhasil dihapus!')
+      fetchOrders()
+    } catch (error: any) {
+      toast.error('Gagal menghapus pesanan: ' + error.message)
+    }
+  }
+
+  const handleEditStatus = (order: Order) => {
+    setEditingOrder(order)
+    setStatus(order.status)
+    setShowStatusModal(true)
+  }
+
+  const handleWhatsApp = (order: Order) => {
+    const cleanNumber = order.phone_number.replace(/[^0-9]/g, '')
+    let formatted = cleanNumber
+
+    if (!formatted.startsWith('62')) {
+      formatted = formatted.replace(/^0/, '')
+      formatted = `62${formatted}`
+    }
+
+    const message =
+      `Halo kak ${order.customer_name},\n\n` +
+      `Kami dari Next Store ingin menginformasikan status pesanan Anda sedang diproses ya.\n\n` +
+      `• Order ID: ${order.id}\n` +
+      `• Produk: ${order.product?.name ?? '-'}\n` +
+      `• Jumlah: ${order.quantity}\n` +
+      `• Total: Rp ${order.total_price.toLocaleString('id-ID')}\n` +
+      `• Status: ${order.status}\n\n` +
+      `Terima kasih telah berbelanja di Next Store!`
+
+    const whatsappUrl = `https://wa.me/${formatted}?text=${encodeURIComponent(message)}`
+    window.open(whatsappUrl, '_blank')
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Baru':
+        return 'bg-blue-100 text-blue-800'
+      case 'Diproses':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'Selesai':
+        return 'bg-green-100 text-green-800'
+      case 'Batal':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="text-center py-12">
+          <div className="text-xl">Memuat pesanan...</div>
+        </div>
+      </AdminLayout>
+    )
+  }
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p className="uppercase tracking-[0.35em] text-xs md:text-sm text-gray-500 dark:text-gray-400">
+            </p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Manajemen Pesanan</h1>
+           
+          </div>
+        </div>
+
+        {/* Orders Table */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50/70 dark:bg-gray-900/40">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Order ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Produk
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Pelanggan
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Jumlah
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Total Harga
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Tanggal
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white/60 dark:bg-gray-900/40 divide-y divide-gray-200 dark:divide-gray-800">
+                {orders.map(order => (
+                  <tr
+                    key={order.id}
+                    className="hover:bg-primary-50/70 dark:hover:bg-gray-800/70 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-200">
+                      {order.id.substring(0, 8)}...
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                      <div className="font-semibold">
+                        {order.product?.name || 'Produk tidak ditemukan'}
+                      </div>
+                      {order.product?.category && (
+                        <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                          {order.product.category}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                      <div className="font-medium">{order.customer_name}</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs">{order.phone_number}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {order.quantity}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
+                      Rp {order.total_price.toLocaleString('id-ID')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(order.created_at).toLocaleDateString('id-ID')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <button
+                          onClick={() => handleWhatsApp(order)}
+                          className="inline-flex items-center px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors shadow-md"
+                          title="Chat WhatsApp"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884" />
+                          </svg>
+                          WhatsApp
+                        </button>
+                        <button
+                          onClick={() => handleEditStatus(order)}
+                          className="px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors"
+                        >
+                          Edit Status
+                        </button>
+                        <button
+                          onClick={() => handleDelete(order.id)}
+                          className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors"
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Status Modal */}
+        {showStatusModal && editingOrder && (
+          <div className="fixed inset-0 bg-black/50 dark:bg-stone-900/80 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full shadow-2xl">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Update Status Pesanan</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) =>
+                      setStatus(
+                        e.target.value as
+                          | 'Baru'
+                          | 'Diproses'
+                          | 'Selesai'
+                          | 'Batal'
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="Baru">Baru</option>
+                    <option value="Diproses">Diproses</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Batal">Batal</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowStatusModal(false)
+                      setEditingOrder(null)
+                    }}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleUpdateStatus}
+                    disabled={updatingStatus}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {updatingStatus ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Memproses...
+                      </span>
+                    ) : 'Update'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
+  )
+}
+
