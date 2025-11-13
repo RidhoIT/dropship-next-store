@@ -41,3 +41,4 @@ USING (bucket_id = 'ecommerce-assets');
 -- atau membuat policies yang lebih ketat dengan authentication
 
 
+
