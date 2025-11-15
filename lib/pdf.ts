@@ -171,36 +171,52 @@ export function generatePDF(order: Order, product: Product) {
   
   currentY += 16
   
-  // Product Info Grid
+  // Product Info Grid - Three Column Layout
   const gridY = currentY
-  const colWidth = contentWidth / 2
-  
-  // Left Column - Quantity
+  const colWidth = contentWidth / 3
+
+  // First Column - Quantity
   doc.setTextColor(textLight[0], textLight[1], textLight[2])
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
   doc.text('Kuantitas', margin + 8, gridY)
-  
+
   doc.setTextColor(textDark[0], textDark[1], textDark[2])
-  doc.setFontSize(16)
+  doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
   doc.text(`${order.quantity}`, margin + 8, gridY + 10)
-  
+
   doc.setTextColor(textLight[0], textLight[1], textLight[2])
-  doc.setFontSize(9)
+  doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
   doc.text('Unit', margin + 8 + doc.getTextWidth(`${order.quantity}`) + 2, gridY + 10)
-  
-  // Right Column - Unit Price
+
+  // Second Column - Unit Price
   doc.setTextColor(textLight[0], textLight[1], textLight[2])
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
   doc.text('Harga Satuan', margin + 8 + colWidth, gridY)
-  
+
   doc.setTextColor(textDark[0], textDark[1], textDark[2])
-  doc.setFontSize(13)
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
   doc.text(`Rp ${product.price.toLocaleString('id-ID')}`, margin + 8 + colWidth, gridY + 10)
+
+  // Third Column - Total (Unit Price × Quantity)
+  const calculatedTotal = product.price * order.quantity
+
+  // Create a highlighted box for total
+  doc.setFillColor(accent[0], accent[1], accent[2])
+  doc.roundedRect(margin + 8 + (colWidth * 2), gridY - 2, colWidth - 8, 16, 2, 2, 'F')
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Total Harga', margin + 8 + (colWidth * 2) + 15, gridY + 2, { align: 'center' })
+
+  doc.setFontSize(12)
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Rp ${calculatedTotal.toLocaleString('id-ID')}`, margin + 8 + (colWidth * 2) + 15, gridY + 11, { align: 'center' })
   
   currentY += 35
   
