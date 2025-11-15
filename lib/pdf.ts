@@ -314,20 +314,11 @@ export function generatePDF(order: Order, product: Product) {
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
-  doc.text('Terima Kasih Atas Kepercayaan Anda! 🙏', pageWidth / 2, footerY + 10, { align: 'center' })
-  
+  doc.text('Terima Kasih Atas Kepercayaan Anda!', pageWidth / 2, footerY + 10, { align: 'center' })
+
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
   doc.text('www.next-store.com  •  support@next-store.com  •  WhatsApp: +62 882-7912-6971', pageWidth / 2, footerY + 19, { align: 'center' })
-  
-  // Watermark - simplified
-  doc.setTextColor(240, 240, 240)
-  doc.setFontSize(60)
-  doc.setFont('helvetica', 'bold')
-  doc.text('NEXT STORE', pageWidth / 2, pageHeight / 2, {
-    align: 'center',
-    angle: 45
-  })
   
   // Save with professional filename
   const fileName = `INVOICE-${shortId}-${new Date().toISOString().split('T')[0]}.pdf`
