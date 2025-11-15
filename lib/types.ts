@@ -29,6 +29,7 @@ export interface Order {
   phone_number: string
   quantity: number
   total_price: number
+  payment_method?: string
   status: 'Baru' | 'Diproses' | 'Selesai' | 'Batal'
   created_at: string
   product?: Product
