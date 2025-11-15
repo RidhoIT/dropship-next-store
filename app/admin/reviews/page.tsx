@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
+export const dynamic = 'force-dynamic'
 import AdminLayout from '@/components/AdminLayout'
 import { supabase } from '@/lib/supabase'
 import { Review, Product } from '@/lib/types'
