@@ -308,7 +308,7 @@ export function generatePDF(order: Order, product: Product) {
   // ========================================
   const footerY = pageHeight - 30
   
-  doc.setFillColor(...secondary)
+  doc.setFillColor(secondary[0], secondary[1], secondary[2])
   doc.rect(0, footerY, pageWidth, 30, 'F')
   
   doc.setTextColor(255, 255, 255)
@@ -320,17 +320,14 @@ export function generatePDF(order: Order, product: Product) {
   doc.setFont('helvetica', 'normal')
   doc.text('www.next-store.com  •  support@next-store.com  •  WhatsApp: +62 882-7912-6971', pageWidth / 2, footerY + 19, { align: 'center' })
   
-  // Watermark
-  doc.setTextColor(245, 245, 245)
+  // Watermark - simplified
+  doc.setTextColor(240, 240, 240)
   doc.setFontSize(60)
   doc.setFont('helvetica', 'bold')
-  doc.saveGraphicsState()
-  doc.setGState(new doc.GState({ opacity: 0.03 }))
   doc.text('NEXT STORE', pageWidth / 2, pageHeight / 2, {
     align: 'center',
     angle: 45
   })
-  doc.restoreGraphicsState()
   
   // Save with professional filename
   const fileName = `INVOICE-${shortId}-${new Date().toISOString().split('T')[0]}.pdf`
