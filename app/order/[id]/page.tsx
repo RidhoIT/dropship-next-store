@@ -24,6 +24,7 @@ export default function OrderPage() {
     address: '',
     phone_number: '',
     quantity: 1,
+    payment_method: 'COD',
   })
 
   useEffect(() => {
@@ -66,9 +67,31 @@ export default function OrderPage() {
     }
   }
 
+  const handleQuantityChange = (change: number) => {
+    const newQuantity = formData.quantity + change
+    if (newQuantity >= 1 && (!product || newQuantity <= product.stock)) {
+      setFormData({ ...formData, quantity: newQuantity })
+    }
+  }
+
+  // Fungsi untuk menghitung harga diskon
+  const calculateDiscountPrice = (originalPrice: number) => {
+    // Harga asli ditambah 100%, lalu diskon 50%
+    const markedUpPrice = originalPrice * 2
+    const discountPercentage = 50
+    const finalPrice = markedUpPrice * (1 - discountPercentage / 100)
+
+    return {
+      originalPrice: originalPrice,
+      markedUpPrice: markedUpPrice,
+      discountPrice: finalPrice,
+      discountPercentage: discountPercentage
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!product) return
 
     if (formData.quantity > product.stock) {
@@ -96,6 +119,7 @@ export default function OrderPage() {
             phone_number: formData.phone_number,
             quantity: formData.quantity,
             total_price: totalPrice,
+            payment_method: formData.payment_method,
             status: 'Baru',
           },
         ])
@@ -165,7 +189,7 @@ export default function OrderPage() {
               />
               <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent dark:from-primary-400 dark:to-primary-600">
                 <span className="hidden sm:inline">E-commerce Store</span>
-                <span className="sm:hidden">E-Store</span>
+                <span className="sm:hidden">Next Store</span>
               </span>
             </Link>
             <div className="flex items-center space-x-4">
@@ -214,16 +238,43 @@ export default function OrderPage() {
                 <p className="italic text-gray-400">Deskripsi belum ditambahkan oleh admin.</p>
               )}
             </div>
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Harga</p>
-                <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                  Rp {product.price.toLocaleString('id-ID')}
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+              {/* Flash Sale Banner */}
+              <div className="bg-red-500 text-white text-center py-2 rounded-lg mb-4">
+                <p className="text-sm font-bold">
+                  FLASH SALE 50% OFF - HARI INI SAJA
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Stok</p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">{product.stock}</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Harga Section */}
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Harga Spesial</p>
+                  <div className="flex items-center space-x-2 mb-1">
+                    <p className="text-lg text-gray-400 line-through">
+                      Rp {calculateDiscountPrice(product.price).markedUpPrice.toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    Rp {product.price.toLocaleString('id-ID')}
+                  </p>
+                  <p className="text-sm text-red-600 dark:text-red-400 font-medium mt-1">
+                    Hemat Rp {calculateDiscountPrice(product.price).markedUpPrice.toLocaleString('id-ID')}
+                  </p>
+                </div>
+
+                {/* Ketersediaan Section */}
+                <div className="text-right">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Ketersediaan</p>
+                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                    Stok Terbatas
+                  </p>
+                  {product.stock <= 10 && (
+                    <p className="text-xs text-orange-500 dark:text-orange-400">
+                      Sisa {product.stock} unit
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -289,26 +340,84 @@ export default function OrderPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Jumlah
                 </label>
-                <input
-                  type="number"
-                  required
-                  min={1}
-                  max={product.stock}
-                  value={formData.quantity}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      quantity: parseInt(e.target.value) || 1,
-                    })
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                />
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuantityChange(-1)}
+                    disabled={formData.quantity <= 1}
+                    className="w-8 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center font-semibold text-base"
+                  >
+                    -
+                  </button>
+                  <div className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-center">
+                    <span className="text-base font-semibold text-gray-900 dark:text-white">
+                      {formData.quantity}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleQuantityChange(1)}
+                    disabled={formData.quantity >= product.stock}
+                    className="w-8 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center font-semibold text-base"
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1">
+                  {product.stock <= 10 ? '⚠️ Stok sangat terbatas! Sisa ' + product.stock + ' unit' : '⚡ Stok Terbatas'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Metode Pembayaran
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, payment_method: 'COD' })}
+                    className={`p-3 rounded-lg border-2 font-medium transition-all ${
+                      formData.payment_method === 'COD'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
+                    }`}
+                  >
+                    💵 COD
+                    <span className="block text-xs mt-1">Bayar di tempat</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, payment_method: 'Transfer Bank' })}
+                    className={`p-3 rounded-lg border-2 font-medium transition-all ${
+                      formData.payment_method === 'Transfer Bank'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
+                    }`}
+                  >
+                    🏦 Transfer Bank
+                    <span className="block text-xs mt-1">Transfer sekarang</span>
+                  </button>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">Total Harga:</span>
-                  <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Harga Normal:</span>
+                    <span className="text-sm text-gray-400 line-through">
+                      Rp {(calculateDiscountPrice(product.price).markedUpPrice * formData.quantity).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Diskon:</span>
+                    <span className="text-sm font-bold text-red-600 dark:text-red-400">
+                      -Rp {(calculateDiscountPrice(product.price).markedUpPrice * formData.quantity).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-700 dark:text-gray-300">Total Bayar:</span>
+                  <span className="text-xl font-bold text-green-600 dark:text-green-400">
                     Rp {(product.price * formData.quantity).toLocaleString('id-ID')}
                   </span>
                 </div>

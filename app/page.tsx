@@ -17,6 +17,21 @@ export default function Home() {
   const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Fungsi untuk menghitung harga diskon
+  const calculateDiscountPrice = (originalPrice: number) => {
+    // Harga asli ditambah 100%, lalu diskon 50%
+    const markedUpPrice = originalPrice * 2
+    const discountPercentage = 50
+    const finalPrice = markedUpPrice * (1 - discountPercentage / 100)
+
+    return {
+      originalPrice: originalPrice,
+      markedUpPrice: markedUpPrice,
+      discountPrice: finalPrice,
+      discountPercentage: discountPercentage
+    }
+  }
+
   useEffect(() => {
     fetchProducts()
   }, [])
@@ -111,7 +126,7 @@ export default function Home() {
               />
               <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent dark:from-primary-400 dark:to-primary-600">
                 <span className="hidden sm:inline">E-commerce Store</span>
-                <span className="sm:hidden">E-Store</span>
+                <span className="sm:hidden">Next Store</span>
               </h1>
             </Link>
             <div className="flex items-center space-x-4">
@@ -239,16 +254,23 @@ export default function Home() {
                       </svg>
                     </div>
                   )}
-                  {/* Stock Badge */}
-                  {product.stock > 0 ? (
-                    <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                      Tersedia
+                  {/* Badges */}
+                  <div className="absolute top-3 right-3 flex flex-col space-y-2">
+                    {/* Diskon Badge */}
+                    <div className="bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg text-center">
+                      DISKON 50%
                     </div>
-                  ) : (
-                    <div className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                      Habis
-                    </div>
-                  )}
+                    {/* Stock Badge */}
+                    {product.stock > 0 ? (
+                      <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
+                        ⚡ Stok Terbatas!
+                      </div>
+                    ) : (
+                      <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                        Habis
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 {/* Product Info */}
@@ -264,13 +286,22 @@ export default function Home() {
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
                     {product.description}
                   </p>
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                      Rp {product.price.toLocaleString('id-ID')}
+                  <div className="mb-4">
+                    {/* Harga Coret dan Diskon */}
+                    <div className="flex items-center space-x-2 mb-1">
+                      <p className="text-lg text-gray-400 line-through">
+                        Rp {calculateDiscountPrice(product.price).markedUpPrice.toLocaleString('id-ID')}
+                      </p>
+                      <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                        Rp {product.price.toLocaleString('id-ID')}
+                      </p>
+                    </div>
+                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                      💰 Hemat Rp {calculateDiscountPrice(product.price).markedUpPrice.toLocaleString('id-ID')}!
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Stok: {product.stock}
-                    </p>
+                    {/* <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-2">
+                      {product.stock <= 10 ? '⚠️ Sisa ' + product.stock + ' unit lagi!' : '⚡ Stok Terbatas'}
+                    </p> */}
                   </div>
                   <Link
                     href={`/order/${product.id}`}

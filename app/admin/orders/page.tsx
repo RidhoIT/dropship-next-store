@@ -117,6 +117,7 @@ export default function AdminOrders() {
       `• Produk: ${order.product?.name ?? '-'}\n` +
       `• Jumlah: ${order.quantity}\n` +
       `• Total: Rp ${order.total_price.toLocaleString('id-ID')}\n` +
+      `• Metode Pembayaran: ${order.payment_method || '-'}\n` +
       `• Status: ${order.status}\n\n` +
       `Terima kasih telah berbelanja di Next Store!`
 
@@ -183,6 +184,9 @@ export default function AdminOrders() {
                     Total Harga
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Metode Pembayaran
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -221,6 +225,17 @@ export default function AdminOrders() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
                       Rp {order.total_price.toLocaleString('id-ID')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                          order.payment_method === 'COD'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                        }`}
+                      >
+                        {order.payment_method === 'COD' ? '💵 COD' : '🏦 Transfer'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span

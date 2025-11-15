@@ -26,6 +26,7 @@ Aplikasi e-commerce sederhana berbasis Next.js dengan Supabase sebagai backend. 
   - Alamat lengkap
   - Nomor telepon
   - Jumlah (quantity)
+  - Metode Pembayaran (COD / Transfer Bank)
 - Menampilkan daftar ulasan/testimoni produk (gambar dan teks)
 
 #### Halaman Sukses (`/success`)
@@ -121,6 +122,7 @@ Aplikasi e-commerce sederhana berbasis Next.js dengan Supabase sebagai backend. 
 | phone_number | text | Nomor telepon |
 | quantity | int4 | Jumlah pesanan |
 | total_price | numeric(10,2) | Total harga (price × quantity) |
+| payment_method | text | Metode pembayaran: 'COD' / 'Transfer Bank' |
 | status | text | Status: Baru/Diproses/Selesai/Batal |
 | created_at | timestamp | Waktu pemesanan |
 

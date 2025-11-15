@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'E-commerce Store',
+  title: 'Next Store',
   description: 'E-commerce sederhana dengan Next.js dan Supabase',
   icons: {
     icon: '/next-store.png',

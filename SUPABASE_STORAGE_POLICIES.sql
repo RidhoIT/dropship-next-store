@@ -42,3 +42,6 @@ USING (bucket_id = 'ecommerce-assets');
 
 
 
+
+
+
