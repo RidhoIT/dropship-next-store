@@ -84,45 +84,54 @@ export function generatePDF(order: Order, product: Product) {
   doc.setFillColor(255, 255, 255)
   doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2])
   doc.setLineWidth(0.5)
-  doc.roundedRect(margin, currentY, contentWidth, 55, 3, 3, 'FD')
-  
+  doc.roundedRect(margin, currentY, contentWidth, 65, 3, 3, 'FD')
+
   // Card Header
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2])
-  doc.roundedRect(margin, currentY, contentWidth, 12, 3, 3, 'F')
-  
+  doc.roundedRect(margin, currentY, contentWidth, 15, 3, 3, 'F')
+
   doc.setTextColor(secondary[0], secondary[1], secondary[2])
-  doc.setFontSize(11)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('INFORMASI PELANGGAN', margin + 8, currentY + 8)
-  
+  doc.text('INFORMASI PELANGGAN', margin + 8, currentY + 10)
+
   // Customer Details
-  currentY += 22
-  
+  currentY += 25
+
+  // Customer Name
   doc.setTextColor(textDark[0], textDark[1], textDark[2])
-  doc.setFontSize(13)
+  doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
   doc.text(order.customer_name, margin + 8, currentY)
-  
-  currentY += 10
-  
+
+  currentY += 12
+
+  // Phone Number
   doc.setTextColor(textLight[0], textLight[1], textLight[2])
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
-  doc.text('📞', margin + 8, currentY)
+  doc.text('Telepon:', margin + 8, currentY)
   doc.setTextColor(textDark[0], textDark[1], textDark[2])
-  doc.text(order.phone_number, margin + 16, currentY)
-  
-  currentY += 8
-  
+  doc.setFontSize(11)
+  doc.text(order.phone_number, margin + 45, currentY)
+
+  currentY += 10
+
+  // Address
   doc.setTextColor(textLight[0], textLight[1], textLight[2])
-  doc.text('📍', margin + 8, currentY)
-  doc.setTextColor(textDark[0], textDark[1], textDark[2])
-  
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Alamat:', margin + 8, currentY)
+
   // Address with word wrap
-  const addressLines = doc.splitTextToSize(order.address, contentWidth - 24)
-  doc.text(addressLines, margin + 16, currentY)
-  
-  currentY += Math.max(addressLines.length * 5, 8) + 18
+  doc.setTextColor(textDark[0], textDark[1], textDark[2])
+  const maxAddressLength = 70
+  const address = order.address.length > maxAddressLength
+    ? order.address.substring(0, maxAddressLength) + '...'
+    : order.address
+  doc.text(address, margin + 45, currentY)
+
+  currentY += 20
   
   // ========================================
   // PRODUCT SECTION - Modern Card
@@ -132,7 +141,7 @@ export function generatePDF(order: Order, product: Product) {
   doc.roundedRect(margin, currentY, contentWidth, 75, 3, 3, 'FD')
   
   // Product Header
-  doc.setFillColor(...primary)
+  doc.setFillColor(primary[0], primary[1], primary[2])
   doc.roundedRect(margin, currentY, contentWidth, 12, 3, 3, 'F')
   
   doc.setTextColor(255, 255, 255)
@@ -223,7 +232,7 @@ export function generatePDF(order: Order, product: Product) {
   
   // Total - Highlighted
   currentY += 12
-  doc.setFillColor(...primary)
+  doc.setFillColor(primary[0], primary[1], primary[2])
   doc.roundedRect(margin, currentY - 6, contentWidth, 20, 2, 2, 'F')
   
   doc.setTextColor(255, 255, 255)
