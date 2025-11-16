@@ -8,6 +8,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import ThemeToggle from '@/components/ThemeToggle'
+import WhatsAppFAB from '@/components/WhatsAppFAB'
 
 export default function OrderPage() {
   const params = useParams()
@@ -576,6 +577,9 @@ export default function OrderPage() {
           </div>
         )}
       </div>
+
+      {/* WhatsApp FAB */}
+      <WhatsAppFAB productName={product.name} />
     </div>
   )
 }

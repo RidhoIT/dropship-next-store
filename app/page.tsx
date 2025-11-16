@@ -9,6 +9,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import ThemeToggle from '@/components/ThemeToggle'
+import WhatsAppFAB from '@/components/WhatsAppFAB'
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
@@ -401,6 +402,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* WhatsApp FAB */}
+      <WhatsAppFAB />
     </div>
   )
 }
