@@ -18,6 +18,7 @@ export default function OrderPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -44,10 +45,23 @@ export default function OrderPage() {
 
       if (error) throw error
       setProduct(data)
+      setCurrentImageIndex(0) // Reset image index when product loads
     } catch (error: any) {
       toast.error('Gagal memuat produk: ' + error.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const nextImage = () => {
+    if (product && product.images && product.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % product.images!.length)
+    }
+  }
+
+  const prevImage = () => {
+    if (product && product.images && product.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + product.images!.length) % product.images!.length)
     }
   }
 
@@ -80,12 +94,14 @@ export default function OrderPage() {
     const markedUpPrice = originalPrice * 2
     const discountPercentage = 50
     const finalPrice = markedUpPrice * (1 - discountPercentage / 100)
+    const savingsAmount = markedUpPrice - finalPrice
 
     return {
       originalPrice: originalPrice,
       markedUpPrice: markedUpPrice,
       discountPrice: finalPrice,
-      discountPercentage: discountPercentage
+      discountPercentage: discountPercentage,
+      savingsAmount: savingsAmount
     }
   }
 
@@ -211,13 +227,87 @@ export default function OrderPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{product.name}</h2>
             {product.images && product.images.length > 0 && (
-              <div className="relative h-80 w-full mb-4 rounded-xl overflow-hidden">
+              <div className="relative w-full mb-4 rounded-xl bg-gray-100 dark:bg-gray-700 aspect-square max-h-80 overflow-hidden">
                 <Image
-                  src={product.images[0]}
+                  src={product.images[currentImageIndex]}
                   alt={product.name}
                   fill
-                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-contain"
+                  priority={true}
                 />
+
+                {/* Image Navigation */}
+                {product.images.length > 1 && (
+                  <>
+                    {/* Previous Button */}
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+
+                    {/* Image Indicators */}
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1">
+                      {product.images.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                            index === currentImageIndex
+                              ? 'bg-white'
+                              : 'bg-white/50'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Image Counter */}
+                    <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                      {currentImageIndex + 1} / {product.images.length}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Thumbnail Gallery */}
+            {product.images && product.images.length > 1 && (
+              <div className="mb-4">
+                <div className="flex space-x-2 overflow-x-auto pb-2">
+                  {product.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                        index === currentImageIndex
+                          ? 'border-primary-500 ring-2 ring-primary-300'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-primary-400'
+                      }`}
+                    >
+                      <Image
+                        src={image}
+                        alt={`${product.name} - Gambar ${index + 1}`}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             <div className="text-gray-600 dark:text-gray-400 mb-4 leading-relaxed space-y-3">
@@ -259,7 +349,7 @@ export default function OrderPage() {
                     Rp {product.price.toLocaleString('id-ID')}
                   </p>
                   <p className="text-sm text-red-600 dark:text-red-400 font-medium mt-1">
-                    Hemat Rp {calculateDiscountPrice(product.price).markedUpPrice.toLocaleString('id-ID')}
+                    Hemat Rp {calculateDiscountPrice(product.price).savingsAmount.toLocaleString('id-ID')}
                   </p>
                 </div>
 
@@ -411,7 +501,7 @@ export default function OrderPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Diskon:</span>
                     <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                      -Rp {(calculateDiscountPrice(product.price).markedUpPrice * formData.quantity).toLocaleString('id-ID')}
+                      -Rp {(calculateDiscountPrice(product.price).savingsAmount * formData.quantity).toLocaleString('id-ID')}
                     </span>
                   </div>
                 </div>
@@ -461,12 +551,13 @@ export default function OrderPage() {
                   {review.images && review.images.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
                       {review.images.map((img, idx) => (
-                        <div key={idx} className="relative h-24 w-full rounded-lg overflow-hidden">
+                        <div key={idx} className="relative w-full aspect-square rounded-lg bg-gray-100 dark:bg-gray-700 overflow-hidden">
                           <Image
                             src={img}
                             alt={`Review ${idx + 1}`}
                             fill
-                            className="object-cover"
+                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                            className="object-contain"
                           />
                         </div>
                       ))}

@@ -18,6 +18,7 @@ export default function Home() {
   const [priceFilter, setPriceFilter] = useState('')
   const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentImageIndices, setCurrentImageIndices] = useState<{[key: string]: number}>({})
 
   // Fungsi untuk menghitung harga diskon
   const calculateDiscountPrice = (originalPrice: number) => {
@@ -25,12 +26,14 @@ export default function Home() {
     const markedUpPrice = originalPrice * 2
     const discountPercentage = 50
     const finalPrice = markedUpPrice * (1 - discountPercentage / 100)
+    const savingsAmount = markedUpPrice - finalPrice
 
     return {
       originalPrice: originalPrice,
       markedUpPrice: markedUpPrice,
       discountPrice: finalPrice,
-      discountPercentage: discountPercentage
+      discountPercentage: discountPercentage,
+      savingsAmount: savingsAmount
     }
   }
 
@@ -99,6 +102,20 @@ export default function Home() {
     }
 
     setFilteredProducts(filtered)
+  }
+
+  const nextImage = (productId: string, totalImages: number) => {
+    setCurrentImageIndices(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] || 0) + 1) % totalImages
+    }))
+  }
+
+  const prevImage = (productId: string, totalImages: number) => {
+    setCurrentImageIndices(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] || 0) - 1 + totalImages) % totalImages
+    }))
   }
 
   if (loading) {
@@ -241,14 +258,72 @@ export default function Home() {
                 className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 transform hover:-translate-y-2"
               >
                 {/* Product Image */}
-                <div className="relative h-64 w-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+                <div className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-700 aspect-square">
                   {product.images && product.images.length > 0 ? (
-                    <Image
-                      src={product.images[0]}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
+                    <>
+                      <Image
+                        src={product.images[currentImageIndices[product.id] || 0]}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                        className="object-contain group-hover:scale-105 transition-transform duration-300"
+                        priority={false}
+                      />
+
+                      {/* Image Navigation */}
+                      {product.images.length > 1 && (
+                        <>
+                          {/* Previous Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              prevImage(product.id, product.images.length)
+                            }}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+
+                          {/* Next Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              nextImage(product.id, product.images.length)
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+
+                          {/* Image Indicators */}
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1">
+                            {product.images.map((_, index) => (
+                              <button
+                                key={index}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setCurrentImageIndices(prev => ({ ...prev, [product.id]: index }))
+                                }}
+                                className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                                  index === (currentImageIndices[product.id] || 0)
+                                    ? 'bg-white'
+                                    : 'bg-white/50'
+                                }`}
+                              />
+                            ))}
+                          </div>
+
+                          {/* Image Counter */}
+                          <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                            {(currentImageIndices[product.id] || 0) + 1} / {product.images.length}
+                          </div>
+                        </>
+                      )}
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,7 +374,7 @@ export default function Home() {
                       </p>
                     </div>
                     <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-                      💰 Hemat Rp {calculateDiscountPrice(product.price).markedUpPrice.toLocaleString('id-ID')}!
+                      💰 Hemat Rp {calculateDiscountPrice(product.price).savingsAmount.toLocaleString('id-ID')}!
                     </p>
                     {/* <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-2">
                       {product.stock <= 10 ? '⚠️ Sisa ' + product.stock + ' unit lagi!' : '⚡ Stok Terbatas'}
