@@ -313,7 +313,7 @@ export default function AdminOrders() {
               >
                 <option value="all">Semua Metode</option>
                 <option value="COD">COD</option>
-                <option value="Transfer">Transfer</option>
+                <option value="Transfer Bank">Transfer Bank</option>
               </select>
             </div>
 
@@ -449,7 +449,7 @@ export default function AdminOrders() {
                             : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
                         }`}
                       >
-                        {order.payment_method === 'COD' ? '💵 COD' : '🏦 Transfer'}
+                        {order.payment_method === 'COD' ? '💵 COD' : '🏦 Transfer Bank'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
