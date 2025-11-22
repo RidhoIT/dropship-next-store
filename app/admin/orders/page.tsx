@@ -10,15 +10,101 @@ import toast from 'react-hot-toast'
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([])
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [showStatusModal, setShowStatusModal] = useState(false)
   const [status, setStatus] = useState<'Baru' | 'Diproses' | 'Selesai' | 'Batal'>('Baru')
 
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [paymentFilter, setPaymentFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<string>('all')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
   useEffect(() => {
     fetchOrders()
   }, [])
+
+  useEffect(() => {
+    applyFilters()
+  }, [orders, searchTerm, statusFilter, paymentFilter, dateFilter, startDate, endDate])
+
+  const applyFilters = () => {
+    let filtered = [...orders]
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(order =>
+        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.product?.name && order.product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.product?.category && order.product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(order => order.status === statusFilter)
+    }
+
+    // Payment method filter
+    if (paymentFilter !== 'all') {
+      filtered = filtered.filter(order => order.payment_method === paymentFilter)
+    }
+
+    // Date filter
+    if (dateFilter !== 'all') {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+      filtered = filtered.filter(order => {
+        const orderDate = new Date(order.created_at)
+
+        switch (dateFilter) {
+          case 'today':
+            return orderDate >= today
+          case 'yesterday':
+            const yesterday = new Date(today)
+            yesterday.setDate(yesterday.getDate() - 1)
+            return orderDate >= yesterday && orderDate < today
+          case 'week':
+            const weekAgo = new Date(today)
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            return orderDate >= weekAgo
+          case 'month':
+            const monthAgo = new Date(today)
+            monthAgo.setMonth(monthAgo.getMonth() - 1)
+            return orderDate >= monthAgo
+          case 'custom':
+            if (startDate && endDate) {
+              const start = new Date(startDate)
+              const end = new Date(endDate)
+              end.setHours(23, 59, 59, 999)
+              return orderDate >= start && orderDate <= end
+            }
+            return true
+          default:
+            return true
+        }
+      })
+    }
+
+    setFilteredOrders(filtered)
+  }
+
+  const clearFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('all')
+    setPaymentFilter('all')
+    setDateFilter('all')
+    setStartDate('')
+    setEndDate('')
+  }
 
   const fetchOrders = async () => {
     try {
@@ -54,6 +140,7 @@ export default function AdminOrders() {
       })
 
       setOrders(transformedData)
+      setFilteredOrders(transformedData)
     } catch (error: any) {
       toast.error('Gagal memuat pesanan: ' + error.message)
     } finally {
@@ -160,8 +247,133 @@ export default function AdminOrders() {
             <p className="uppercase tracking-[0.35em] text-xs md:text-sm text-gray-500 dark:text-gray-400">
             </p>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Manajemen Pesanan</h1>
-           
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Menampilkan {filteredOrders.length} dari {orders.length} pesanan
+            </p>
           </div>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Cari berdasarkan Order ID, nama, telepon, produk, atau kategori..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+              <svg
+                className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Filter Options */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Filter Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              >
+                <option value="all">Semua Status</option>
+                <option value="Baru">Baru</option>
+                <option value="Diproses">Diproses</option>
+                <option value="Selesai">Selesai</option>
+                <option value="Batal">Batal</option>
+              </select>
+            </div>
+
+            {/* Payment Method Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Metode Pembayaran
+              </label>
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              >
+                <option value="all">Semua Metode</option>
+                <option value="COD">COD</option>
+                <option value="Transfer Bank">Transfer Bank</option>
+              </select>
+            </div>
+
+            {/* Date Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Filter Tanggal
+              </label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              >
+                <option value="all">Semua Waktu</option>
+                <option value="today">Hari Ini</option>
+                <option value="yesterday">Kemarin</option>
+                <option value="week">7 Hari Terakhir</option>
+                <option value="month">30 Hari Terakhir</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-end">
+              <button
+                onClick={clearFilters}
+                className="w-full px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                Reset Filter
+              </button>
+            </div>
+          </div>
+
+          {/* Custom Date Range */}
+          {dateFilter === 'custom' && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tanggal Mulai
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tanggal Selesai
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Orders Table */}
@@ -200,7 +412,8 @@ export default function AdminOrders() {
                 </tr>
               </thead>
               <tbody className="bg-white/60 dark:bg-gray-900/40 divide-y divide-gray-200 dark:divide-gray-800">
-                {orders.map(order => (
+                {filteredOrders.length > 0 ? (
+                  filteredOrders.map(order => (
                   <tr
                     key={order.id}
                     className="hover:bg-primary-50/70 dark:hover:bg-gray-800/70 transition-colors"
@@ -209,11 +422,11 @@ export default function AdminOrders() {
                       {order.id.substring(0, 8)}...
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                      <div className="font-semibold">
+                      <div className="font-semibold truncate max-w-[200px] block" title={order.product?.name || 'Produk tidak ditemukan'}>
                         {order.product?.name || 'Produk tidak ditemukan'}
                       </div>
                       {order.product?.category && (
-                        <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                        <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300 truncate max-w-[150px] block" title={order.product.category}>
                           {order.product.category}
                         </span>
                       )}
@@ -236,7 +449,7 @@ export default function AdminOrders() {
                             : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
                         }`}
                       >
-                        {order.payment_method === 'COD' ? '💵 COD' : '🏦 Transfer'}
+                        {order.payment_method === 'COD' ? '💵 COD' : '🏦 Transfer Bank'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -276,7 +489,34 @@ export default function AdminOrders() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center">
+                    <div className="text-gray-500 dark:text-gray-400">
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <p className="text-lg font-medium mb-1">Tidak ada pesanan ditemukan</p>
+                      <p className="text-sm">
+                        {searchTerm || statusFilter !== 'all' || paymentFilter !== 'all' || dateFilter !== 'all'
+                          ? 'Coba ubah filter atau kata kunci pencarian'
+                          : 'Belum ada pesanan yang masuk'}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
               </tbody>
             </table>
           </div>
