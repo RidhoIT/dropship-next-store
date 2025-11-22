@@ -23,9 +23,9 @@ export default function Home() {
 
   // Fungsi untuk menghitung harga diskon
   const calculateDiscountPrice = (originalPrice: number) => {
-    // Harga asli ditambah 100%, lalu diskon 50%
+    // Harga asli ditambah 100%, lalu diskon 75%
     const markedUpPrice = originalPrice * 2
-    const discountPercentage = 50
+    const discountPercentage = 75
     const finalPrice = markedUpPrice * (1 - discountPercentage / 100)
     const savingsAmount = markedUpPrice - finalPrice
 
@@ -336,7 +336,7 @@ export default function Home() {
                   <div className="absolute top-3 right-3 flex flex-col space-y-2">
                     {/* Diskon Badge */}
                     <div className="bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg text-center">
-                      DISKON 50%
+                      DISKON 75%
                     </div>
                     {/* Stock Badge */}
                     {product.stock > 0 ? (

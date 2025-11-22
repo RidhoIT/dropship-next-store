@@ -91,9 +91,9 @@ export default function OrderPage() {
 
   // Fungsi untuk menghitung harga diskon
   const calculateDiscountPrice = (originalPrice: number) => {
-    // Harga asli ditambah 100%, lalu diskon 50%
+    // Harga asli ditambah 100%, lalu diskon 75%
     const markedUpPrice = originalPrice * 2
-    const discountPercentage = 50
+    const discountPercentage = 75
     const finalPrice = markedUpPrice * (1 - discountPercentage / 100)
     const savingsAmount = markedUpPrice - finalPrice
 
@@ -333,7 +333,7 @@ export default function OrderPage() {
               {/* Flash Sale Banner */}
               <div className="bg-red-500 text-white text-center py-2 rounded-lg mb-4">
                 <p className="text-sm font-bold">
-                  FLASH SALE 50% OFF - HARI INI SAJA
+                  FLASH SALE 75% OFF - HARI INI SAJA
                 </p>
               </div>
 
