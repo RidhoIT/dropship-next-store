@@ -40,6 +40,7 @@ export interface DashboardStats {
   totalProfit: number
   totalProducts: number
   totalReviews: number
-  salesChart: { date: string; sales: number }[]
+  totalOrders: number
+  salesChart: { date: string; sales: number; orders: number; profit: number }[]
 }
 
