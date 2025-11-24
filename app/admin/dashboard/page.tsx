@@ -14,12 +14,37 @@ import {
   Cell,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer,
 } from 'recharts'
 import toast from 'react-hot-toast'
+
+// Helper function to format large numbers for tooltips
+const formatCurrency = (num: number): string => {
+  if (num >= 1000000000) {
+    return `Rp ${(num / 1000000000).toFixed(1)} M`
+  } else if (num >= 1000000) {
+    return `Rp ${(num / 1000000).toFixed(1)} jt`
+  } else if (num >= 1000) {
+    return `Rp ${(num / 1000).toFixed(1)} rb`
+  } else {
+    return `Rp ${num.toLocaleString('id-ID')}`
+  }
+}
+
+// Helper function to format Y-axis labels
+const formatYAxis = (value: number): string => {
+  if (value >= 1000000000) {
+    return `${(value / 1000000000).toFixed(1)} M`
+  } else if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)} jt`
+  } else if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)} rb`
+  } else {
+    return value.toString()
+  }
+}
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -158,62 +183,57 @@ export default function AdminDashboard() {
 
         {/* Date Filter */}
         <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-            <div className="flex-1 min-w-0">
-              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tanggal Mulai
-              </label>
-              <input
-                type="date"
-                id="startDate"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tanggal Akhir
-              </label>
-              <input
-                type="date"
-                id="endDate"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-            <div className="flex gap-2">
+          <div className="space-y-4">
+            {/* Mobile: Stacked layout */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  &nbsp;
+                <label htmlFor="startDate" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                  Tanggal Mulai
                 </label>
-                <button
-                  onClick={() => {
-                    const today = new Date()
-                    const thirtyDaysAgo = new Date()
-                    thirtyDaysAgo.setDate(today.getDate() - 30)
-                    setStartDate(thirtyDaysAgo.toISOString().split('T')[0])
-                    setEndDate(today.toISOString().split('T')[0])
-                  }}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
-                >
-                  Reset
-                </button>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  &nbsp;
+                <label htmlFor="endDate" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                  Tanggal Akhir
                 </label>
-                <button
-                  onClick={() => {
-                    fetchDashboardStats()
-                  }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-                >
-                  Filter
-                </button>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
               </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <button
+                onClick={() => {
+                  const today = new Date()
+                  const thirtyDaysAgo = new Date()
+                  thirtyDaysAgo.setDate(today.getDate() - 30)
+                  setStartDate(thirtyDaysAgo.toISOString().split('T')[0])
+                  setEndDate(today.toISOString().split('T')[0])
+                }}
+                className="w-full sm:flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Reset
+              </button>
+              <button
+                onClick={() => {
+                  fetchDashboardStats()
+                }}
+                className="w-full sm:flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Filter
+              </button>
             </div>
           </div>
         </div>
@@ -299,7 +319,6 @@ export default function AdminDashboard() {
             </h2>
             <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <LineChart data={stats?.salesChart || []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis
                   dataKey="date"
                   stroke="#6b7280"
@@ -308,6 +327,7 @@ export default function AdminDashboard() {
                 <YAxis
                   stroke="#6b7280"
                   style={{ fill: '#6b7280' }}
+                  tickFormatter={formatYAxis}
                 />
                 <Tooltip
                   content={({ active, payload }) => {
@@ -317,10 +337,10 @@ export default function AdminDashboard() {
                         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                           <p className="font-semibold text-gray-900 mb-2">{data.date}</p>
                           <p className="text-blue-600">
-                            Total Omset: Rp {data.sales.toLocaleString('id-ID')}
+                            Total Omset: {formatCurrency(data.sales)}
                           </p>
                           <p className="text-green-600">
-                            Total Profit: Rp {data.profit.toLocaleString('id-ID')}
+                            Total Profit: {formatCurrency(data.profit)}
                           </p>
                           <p className="text-purple-600">
                             Total Orders: {data.orders}
@@ -338,7 +358,7 @@ export default function AdminDashboard() {
                   stroke="#3b82f6"
                   strokeWidth={3}
                   name="Total Omset"
-                  dot={{ fill: '#3b82f6', r: 5 }}
+                  dot={false}
                 />
                 <Line
                   type="monotone"
@@ -346,7 +366,7 @@ export default function AdminDashboard() {
                   stroke="#10b981"
                   strokeWidth={3}
                   name="Total Profit"
-                  dot={{ fill: '#10b981', r: 5 }}
+                  dot={false}
                 />
               </LineChart>
             </ResponsiveContainer>
